@@ -4,15 +4,26 @@ import streamlit as st
 # Read files
 @st.cache
 def import_files():
-    id_list = pd.read_excel('./id_list.xlsx')
-    id_ok = pd.read_excel('./id_ok.xlsx')
-    id_ex = pd.read_excel('./id_ex.xlsx')
+    id_input = pd.read_excel('./id_list.xlsx')
+    id_green = pd.read_excel('./id_ok.xlsx')
+    id_oos = pd.read_excel('./id_ex.xlsx')
 
-    return id_list, id_ok, id_ex;
+    return id_input, id_green, id_oos;
 
-id_list, id_ok, id_ex = import_files()
+id_input, id_green, id_oos = import_files()
 
-st.write(id_ok)
+export = id_input.copy()
+
+done = id_green[id_green['ID'].isin(export.iloc[:,0])]
+
+export['Green'] = export['ID'].isin(id_green.iloc[:,0])
+
+export['OOS'] = export['ID'].isin(id_oos.iloc[:,0])
+
+
+# done_dup = done[done.duplicated()]
+
+st.write(export, id_input)
 
 # Excel Export
 
