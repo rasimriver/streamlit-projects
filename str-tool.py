@@ -1,31 +1,50 @@
 import pandas as pd
 import streamlit as st
+import os
+import re
 
 # Read files
-@st.cache
-def import_files():
-    id_input = pd.read_excel('./id_list.xlsx')
-    id_green = pd.read_excel('./id_ok.xlsx')
-    id_oos = pd.read_excel('./id_ex.xlsx')
 
-    return id_input, id_green, id_oos;
+id_green = pd.read_excel('./id_ok.xlsx')
+id_oos = pd.read_excel('./id_ex.xlsx')
 
-id_input, id_green, id_oos = import_files()
+def file_selector(folder_path='.'):
+    filenames = os.listdir(folder_path)
+    regex = re.compile(r'(.xlsx|.xls)$')
+    filenames = [i for i in filenames if regex.search(i)]
+    selected_filename = st.selectbox('Select an Excel file', filenames)
+    return os.path.join(folder_path, selected_filename)
+
+filename = file_selector()
+st.write('You selected `%s`' % filename)
+
+id_input = pd.read_excel(filename)
 
 export = id_input.copy()
 
-done = id_green[id_green['ID'].isin(export.iloc[:,0])]
+def column_selector(df):
+    columns = list(df.columns)
+    selected_column = st.selectbox('Select a column', columns)
+    return selected_column
 
-export['Green'] = export['ID'].isin(id_green.iloc[:,0])
+column = column_selector(export)
+st.write('You selected `%s`' % column)
 
-export['OOS'] = export['ID'].isin(id_oos.iloc[:,0])
+done = id_green[id_green.iloc[:,0].isin(export.loc[:,column])]
 
+export['Green'] = export.loc[:,column].isin(id_green.iloc[:,0])
+
+export['OOS'] = export.loc[:,column].isin(id_oos.iloc[:,0])
 
 # done_dup = done[done.duplicated()]
 
-st.write(export, id_input)
+st.write(export)
 
 # Excel Export
 
-# export = result[result['TO - Organisation'].str.contains('^ITD', na=False)].loc[:,['Application Short Name',  'Application ID', 'TO - Organisation']]
-# export_xlsx(export)
+if st.button('Export'):
+    filename = "export3.xlsx"
+    export.to_excel(filename)
+    st.write('File has been exported with the filename %s' % filename)
+
+# export.to_excel('export.xlsx')
